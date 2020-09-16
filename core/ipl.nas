@@ -32,20 +32,39 @@ entry:
 		MOV		SP,0x7c00
 		MOV		DS,AX
 
-; ディスクを読む
+; 磁盘读取
 
 		MOV		AX,0x0820
 		MOV		ES,AX
-		MOV		CH,0			; シリンダ0
-		MOV		DH,0			; ヘッド0
-		MOV		CL,2			; セクタ2
+		MOV		CH,0			; 柱面0
+		MOV		DH,0			; 磁头0
+		MOV		CL,2			; 扇区2
+readloop:
+		MOV		SI,0			; 记录失败次数的寄存器
+retry:
 
 		MOV		AH,0x02			; AH=0x02 : ディスク読み込み
-		MOV		AL,1			; 1セクタ
+		MOV		AL,1			; 1扇区
 		MOV		BX,0
-		MOV		DL,0x00			; Aドライブ
+		MOV		DL,0x00			; A驱动器
 		INT		0x13			; ディスクBIOS呼び出し
-		JC		error
+		JNC		next
+		ADD		SI,1
+		CMP		SI,5
+		JAE		error
+		MOV		AH,0x00
+		MOV		DL,0x00
+		INT		0x13			; 重置驱动器
+		JMP		retry
+
+next:
+		MOV		AX,ES			; 地址后移0x0020
+		ADD		AX,0x0020
+		MOV		ES,AX
+		ADD		CL,1
+		CMP		CL,18
+		JBE		readloop
+		
 		
 putloop:
 		MOV		AL,[SI]
