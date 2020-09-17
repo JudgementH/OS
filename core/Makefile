@@ -1,39 +1,55 @@
+TOOLPATH = ../tools/
+MAKE     = $(TOOLPATH)make.exe -r
+NASK     = $(TOOLPATH)nask.exe
+EDIMG    = $(TOOLPATH)edimg.exe
+IMGTOL   = $(TOOLPATH)imgtol.com
+FDIMG0AT = $(TOOLPATH)fdimg0at.tek
+COPY     = copy
+DEL      = del
 
-# ƒfƒtƒHƒ‹ƒg“®ì
+# é»˜è®¤
 
 default :
-	../tools/make.exe img
+	$(MAKE) img
 
-# ƒtƒ@ƒCƒ‹¶¬‹K‘¥
+# æ–‡ä»¶ç”Ÿæˆ
 
 ipl.bin : ipl.nas Makefile
-	../tools/nask.exe ipl.nas ipl.bin ipl.lst
+	$(NASK) ipl.nas ipl.bin ipl.lst
+	
+os.sys : os.nas	Makefile
+	$(NASK)	os.nas os.sys os.lst
 
-helloos.img : ipl.bin Makefile
-	../tools/edimg.exe   imgin:../tools/fdimg0at.tek \
-		wbinimg src:ipl.bin len:512 from:0 to:0   imgout:helloos.img
+os.img : ipl.bin os.sys Makefile
+	$(EDIMG)   imgin:$(FDIMG0AT) \
+		wbinimg src:ipl.bin len:512 from:0 to:0 \
+		copy from:os.sys to:@: \
+		imgout:os.img
 
-# ƒRƒ}ƒ“ƒh
+# æ‰¹å¤„ç†
 
 asm :
-	../tools/make.exe -r ipl.bin
+	$(MAKE) ipl.bin
 
 img :
-	../tools/make.exe -r helloos.img
+	$(MAKE) os.img
 
 run :
-	../tools/make.exe img
-	copy helloos.img ..\tools\qemu\fdimage0.bin
-	../tools/make.exe -C ../tools/qemu
+	$(MAKE) img
+	$(COPY) os.img ..\tools\qemu\fdimage0.bin
+	$(MAKE) -C ../tools/qemu
 
 install :
-	../tools/make.exe img
-	../tools/imgtol.com w a: helloos.img
+	$(MAKE) img
+	$(IMGTOL) w a: os.img
 
 clean :
-	-del ipl.bin
-	-del ipl.lst
+	-$(DEL) ipl.bin
+	-$(DEL) ipl.lst
+	-$(DEL) os.sys
+	-$(DEL) os.lst
 
 src_only :
-	../tools/make.exe clean
-	-del helloos.img
+	$(MAKE) clean
+	-$(DEL) os.img
+
